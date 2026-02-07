@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, BarChart2, Info, LayoutDashboard } from 'lucide-react';
+import { Camera, BarChart2, Info, LayoutDashboard, Settings as SettingsIcon } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 const Sidebar: React.FC = () => {
@@ -11,6 +11,7 @@ const Sidebar: React.FC = () => {
     { path: '/', icon: <Camera size={20} />, label: 'بازرسی آنلاین' },
     { path: '/dashboard', icon: <BarChart2 size={20} />, label: 'گزارشات و نمودارها' },
     { path: '/hardware', icon: <Info size={20} />, label: 'توصیه سخت‌افزاری' },
+    { path: '/settings', icon: <SettingsIcon size={20} />, label: 'تنظیمات هوش مصنوعی' },
   ];
 
   return (
@@ -38,8 +39,8 @@ const Sidebar: React.FC = () => {
       </nav>
 
       <div className="p-4 border-t border-slate-800 text-xs text-slate-500 text-center">
-        نسخه ۱.۰.۰ <br/>
-        سیستم هوشمند QC
+        نسخه ۱.۱.۰ <br/>
+        سیستم هوشمند QC (آفلاین فعال)
       </div>
     </div>
   );

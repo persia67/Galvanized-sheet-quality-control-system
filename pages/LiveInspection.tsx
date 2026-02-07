@@ -1,45 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import CameraView from '../components/CameraView';
-import { analyzeSteelFrame } from '../services/geminiService';
-import { InspectionRecord, SteelGrade } from '../types';
-import { AlertTriangle, CheckCircle, XCircle, Loader2, Activity, Camera } from 'lucide-react';
+import { analyzeSteelFrame } from '../services/aiService';
+import { InspectionRecord, SteelGrade, AppSettings, DEFAULT_SETTINGS } from '../types';
+import { AlertTriangle, CheckCircle, XCircle, Loader2, Activity, Camera, Monitor, Cloud } from 'lucide-react';
 
 const LiveInspection: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [autoMode, setAutoMode] = useState(false);
   const [lastRecord, setLastRecord] = useState<InspectionRecord | null>(null);
   const [records, setRecords] = useState<InspectionRecord[]>([]);
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
 
-  // Load history from local storage on mount
   useEffect(() => {
     const saved = localStorage.getItem('qc_records');
     if (saved) {
-      setRecords(JSON.parse(saved).slice(0, 50)); // Keep last 50
+      setRecords(JSON.parse(saved).slice(0, 50));
+    }
+    const savedSettings = localStorage.getItem('app_settings');
+    if (savedSettings) {
+      setSettings(JSON.parse(savedSettings));
     }
   }, []);
 
   const handleCapture = async (imageSrc: string) => {
     setIsAnalyzing(true);
-    
-    // Call Gemini Service
-    const result = await analyzeSteelFrame(imageSrc);
-    
-    const newRecord: InspectionRecord = {
-      id: Date.now().toString(),
-      timestamp: Date.now(),
-      imageUrl: imageSrc,
-      grade: result.grade as SteelGrade,
-      defects: result.defects,
-      confidence: result.confidence,
-      batchId: `B-${new Date().getHours()}`
-    };
+    try {
+      const result = await analyzeSteelFrame(imageSrc);
+      const newRecord: InspectionRecord = {
+        id: Date.now().toString(),
+        timestamp: Date.now(),
+        imageUrl: imageSrc,
+        grade: result.grade as SteelGrade,
+        defects: result.defects,
+        confidence: result.confidence,
+        batchId: `B-${new Date().getHours()}`
+      };
 
-    setLastRecord(newRecord);
-    const updatedRecords = [newRecord, ...records].slice(0, 100);
-    setRecords(updatedRecords);
-    localStorage.setItem('qc_records', JSON.stringify(updatedRecords));
-    
-    setIsAnalyzing(false);
+      setLastRecord(newRecord);
+      const updatedRecords = [newRecord, ...records].slice(0, 100);
+      setRecords(updatedRecords);
+      localStorage.setItem('qc_records', JSON.stringify(updatedRecords));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const getGradeColor = (grade: SteelGrade) => {
@@ -58,15 +63,21 @@ const LiveInspection: React.FC = () => {
           <h2 className="text-2xl font-bold text-slate-800">ایستگاه بازرسی خط ۲</h2>
           <p className="text-slate-500 mt-1">مانیتورینگ لحظه‌ای عیوب سطحی ورق</p>
         </div>
-        <div className="flex items-center gap-2 text-sm bg-white px-3 py-1 rounded-full shadow-sm text-slate-600">
-          <Activity size={16} className="text-brand-500" />
-          <span>نرخ تولید: ۴۵ متر/دقیقه</span>
+        <div className="flex items-center gap-4">
+          <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border ${
+            settings.aiEngine === 'local' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-brand-50 text-brand-600 border-brand-200'
+          }`}>
+            {settings.aiEngine === 'local' ? <Monitor size={14} /> : <Cloud size={14} />}
+            <span>موتور: {settings.aiEngine === 'local' ? 'آفلاین (Local)' : 'ابری (Gemini)'}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm bg-white px-3 py-1 rounded-full shadow-sm text-slate-600 border border-slate-100">
+            <Activity size={16} className="text-brand-500" />
+            <span>نرخ تولید: ۴۵ متر/دقیقه</span>
+          </div>
         </div>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Left Column: Camera */}
         <div className="lg:col-span-2 space-y-4">
           <CameraView 
             onCapture={handleCapture} 
@@ -75,7 +86,6 @@ const LiveInspection: React.FC = () => {
             setAutoMode={setAutoMode}
           />
 
-          {/* Recent History Strip */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
             <h3 className="text-sm font-semibold text-slate-700 mb-3">آخرین بررسی‌ها</h3>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
@@ -97,13 +107,12 @@ const LiveInspection: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column: Analysis Result */}
         <div className="lg:col-span-1">
           {isAnalyzing ? (
             <div className="h-full min-h-[400px] bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col items-center justify-center text-brand-600 animate-pulse">
               <Loader2 size={48} className="animate-spin mb-4" />
               <p className="font-bold text-lg">تحلیل هوشمند تصویر...</p>
-              <p className="text-sm text-slate-400 mt-2">Gemini AI Processing</p>
+              <p className="text-sm text-slate-400 mt-2">{settings.aiEngine === 'local' ? 'Local AI Processing' : 'Gemini AI Processing'}</p>
             </div>
           ) : lastRecord ? (
             <div className="bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden h-full">

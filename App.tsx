@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar';
 import LiveInspection from './pages/LiveInspection';
 import Dashboard from './pages/Dashboard';
 import HardwareInfo from './pages/HardwareInfo';
+import Settings from './pages/Settings';
 
 const App: React.FC = () => {
   return (
@@ -16,6 +17,7 @@ const App: React.FC = () => {
             <Route path="/" element={<LiveInspection />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/hardware" element={<HardwareInfo />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

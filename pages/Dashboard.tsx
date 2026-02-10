@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useState, useRef } from 'react';
 import { InspectionRecord, SteelGrade } from '../types';
 import { 
@@ -112,6 +110,15 @@ const Dashboard: React.FC = () => {
       </div>
     </div>
   );
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'High': return 'bg-red-500';
+      case 'Medium': return 'bg-yellow-500';
+      case 'Low': return 'bg-blue-500';
+      default: return 'bg-slate-400';
+    }
+  };
 
   return (
     <div className="p-6 space-y-8 pb-20">
@@ -270,7 +277,6 @@ const Dashboard: React.FC = () => {
                       </div>
                       <div className="max-h-60 overflow-y-auto space-y-1">
                         {allUniqueDefects.length > 0 ? (
-                          // Added explicit string type to fix unknown type error when passing to toggleDefectFilter
                           allUniqueDefects.map((defect: string) => (
                             <button
                               key={defect}
@@ -293,7 +299,6 @@ const Dashboard: React.FC = () => {
 
                 {selectedDefects.length > 0 && (
                   <div className="flex items-center gap-1">
-                    {/* Explicitly typing d as string to avoid unknown type issues in map callbacks */}
                     {selectedDefects.map((d: string) => (
                       <span key={d} className="bg-slate-100 text-slate-600 text-[10px] px-2 py-1 rounded-full flex items-center gap-1 border border-slate-200">
                         {d}
@@ -342,10 +347,11 @@ const Dashboard: React.FC = () => {
                           {record.defects.length > 0 ? (
                             <div className="flex flex-wrap gap-1">
                               {record.defects.map((d, i) => (
-                                <span key={i} className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                                <span key={i} className={`text-[10px] px-2 py-0.5 rounded border flex items-center gap-1.5 ${
                                   d.severity === 'High' ? 'bg-red-50 border-red-100 text-red-600' : 
                                   d.severity === 'Medium' ? 'bg-yellow-50 border-yellow-100 text-yellow-600' : 'bg-blue-50 border-blue-100 text-blue-600'
                                 }`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${getSeverityColor(d.severity)}`}></span>
                                   {d.type}
                                 </span>
                               ))}

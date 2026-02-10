@@ -2,7 +2,28 @@ import React, { useState, useEffect } from 'react';
 import CameraView from '../components/CameraView';
 import { analyzeSteelFrame } from '../services/aiService';
 import { InspectionRecord, SteelGrade, AppSettings, DEFAULT_SETTINGS } from '../types';
-import { AlertTriangle, CheckCircle, XCircle, Loader2, Activity, Camera, Monitor, Cloud } from 'lucide-react';
+import { Icons } from '../components/Icons';
+
+const styles = {
+  page: { padding: '24px' },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '24px' },
+  title: { fontSize: '24px', fontWeight: 'bold', color: '#1e293b', margin: 0 },
+  subtitle: { color: '#64748b', marginTop: '4px', fontSize: '14px' },
+  statusBadge: { display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 12px', borderRadius: '9999px', fontSize: '12px', fontWeight: 'bold', border: '1px solid #e2e8f0', backgroundColor: 'white', color: '#475569' },
+  grid: { display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '24px' },
+  mainCol: { gridColumn: 'span 8' },
+  sideCol: { gridColumn: 'span 4' },
+  recentBox: { backgroundColor: 'white', padding: '16px', borderRadius: '12px', border: '1px solid #f1f5f9', marginTop: '16px' },
+  recentTitle: { fontSize: '14px', fontWeight: '600', color: '#334155', marginBottom: '12px' },
+  scrollRow: { display: 'flex', gap: '12px', overflowX: 'auto' as 'auto', paddingBottom: '8px' },
+  resultCard: { backgroundColor: 'white', borderRadius: '12px', border: '1px solid #f1f5f9', overflow: 'hidden', height: '100%' },
+  resultHeader: (color: string) => ({ padding: '24px', borderBottom: '1px solid #f1f5f9', backgroundColor: color, color: '#334155' }),
+  gradeBox: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
+  gradeTitle: { fontSize: '30px', fontWeight: '800', margin: '4px 0' },
+  defectList: { padding: '24px' },
+  defectItem: { display: 'flex', alignItems: 'flex-start', gap: '12px', backgroundColor: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #f1f5f9', marginBottom: '12px' },
+  emptyState: { height: '100%', backgroundColor: '#f8fafc', borderRadius: '12px', border: '2px dashed #cbd5e1', display: 'flex', flexDirection: 'column' as 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', padding: '32px' }
+};
 
 const LiveInspection: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -13,13 +34,9 @@ const LiveInspection: React.FC = () => {
 
   useEffect(() => {
     const saved = localStorage.getItem('qc_records');
-    if (saved) {
-      setRecords(JSON.parse(saved).slice(0, 50));
-    }
+    if (saved) setRecords(JSON.parse(saved).slice(0, 50));
     const savedSettings = localStorage.getItem('app_settings');
-    if (savedSettings) {
-      setSettings(JSON.parse(savedSettings));
-    }
+    if (savedSettings) setSettings(JSON.parse(savedSettings));
   }, []);
 
   const handleCapture = async (imageSrc: string) => {
@@ -47,38 +64,36 @@ const LiveInspection: React.FC = () => {
     }
   };
 
-  const getGradeColor = (grade: SteelGrade) => {
+  const getGradeBg = (grade: SteelGrade) => {
     switch (grade) {
-      case SteelGrade.Grade1: return 'text-green-600 bg-green-50 border-green-200';
-      case SteelGrade.Grade2: return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case SteelGrade.Grade3: return 'text-red-600 bg-red-50 border-red-200';
-      default: return 'text-slate-600 bg-slate-50';
+      case SteelGrade.Grade1: return '#f0fdf4'; // green-50
+      case SteelGrade.Grade2: return '#fefce8'; // yellow-50
+      case SteelGrade.Grade3: return '#fef2f2'; // red-50
+      default: return '#f8fafc';
     }
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <header className="flex justify-between items-end mb-6">
+    <div style={styles.page}>
+      <header style={styles.header}>
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">ایستگاه بازرسی خط ۲</h2>
-          <p className="text-slate-500 mt-1">مانیتورینگ لحظه‌ای عیوب سطحی ورق</p>
+          <h2 style={styles.title}>ایستگاه بازرسی خط ۲</h2>
+          <p style={styles.subtitle}>مانیتورینگ لحظه‌ای عیوب سطحی ورق (Local AI)</p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border ${
-            settings.aiEngine === 'local' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-brand-50 text-brand-600 border-brand-200'
-          }`}>
-            {settings.aiEngine === 'local' ? <Monitor size={14} /> : <Cloud size={14} />}
-            <span>موتور: {settings.aiEngine === 'local' ? 'آفلاین (Local)' : 'ابری (Gemini)'}</span>
+        <div style={{ display: 'flex', gap: '16px' }}>
+          <div style={styles.statusBadge}>
+            <Icons.HardDrive size={16} />
+            <span>WebGPU Ready</span>
           </div>
-          <div className="flex items-center gap-2 text-sm bg-white px-3 py-1 rounded-full shadow-sm text-slate-600 border border-slate-100">
-            <Activity size={16} className="text-brand-500" />
+          <div style={styles.statusBadge}>
+            <Icons.Activity size={16} />
             <span>نرخ تولید: ۴۵ متر/دقیقه</span>
           </div>
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-4">
+      <div style={styles.grid}>
+        <div style={styles.mainCol}>
           <CameraView 
             onCapture={handleCapture} 
             isAnalyzing={isAnalyzing} 
@@ -86,94 +101,84 @@ const LiveInspection: React.FC = () => {
             setAutoMode={setAutoMode}
           />
 
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-            <h3 className="text-sm font-semibold text-slate-700 mb-3">آخرین بررسی‌ها</h3>
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+          <div style={styles.recentBox}>
+            <h3 style={styles.recentTitle}>آخرین بررسی‌ها</h3>
+            <div style={styles.scrollRow}>
               {records.slice(0, 6).map((rec) => (
-                <div key={rec.id} className="min-w-[100px] flex flex-col items-center">
-                  <div className={`w-24 h-16 rounded-lg overflow-hidden border-2 relative ${
-                    rec.grade === SteelGrade.Grade1 ? 'border-green-400' : 
-                    rec.grade === SteelGrade.Grade2 ? 'border-yellow-400' : 'border-red-400'
-                  }`}>
-                    <img src={rec.imageUrl} alt="scan" className="w-full h-full object-cover" />
+                <div key={rec.id} style={{ minWidth: '100px', textAlign: 'center' }}>
+                  <div style={{ width: '100px', height: '64px', borderRadius: '8px', overflow: 'hidden', border: `2px solid ${rec.grade === SteelGrade.Grade1 ? '#4ade80' : rec.grade === SteelGrade.Grade2 ? '#facc15' : '#f87171'}` }}>
+                    <img src={rec.imageUrl} alt="scan" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
-                  <span className="text-[10px] mt-1 font-bold text-slate-600">
+                  <span style={{ fontSize: '10px', marginTop: '4px', fontWeight: 'bold', color: '#475569', display: 'block' }}>
                     {new Date(rec.timestamp).toLocaleTimeString('fa-IR')}
                   </span>
                 </div>
               ))}
-              {records.length === 0 && <p className="text-sm text-slate-400 py-4">هنوز رکوردی ثبت نشده است.</p>}
+              {records.length === 0 && <p style={{ fontSize: '14px', color: '#94a3b8' }}>هنوز رکوردی ثبت نشده است.</p>}
             </div>
           </div>
         </div>
 
-        <div className="lg:col-span-1">
+        <div style={styles.sideCol}>
           {isAnalyzing ? (
-            <div className="h-full min-h-[400px] bg-white rounded-xl shadow-sm border border-slate-100 flex flex-col items-center justify-center text-brand-600 animate-pulse">
-              <Loader2 size={48} className="animate-spin mb-4" />
-              <p className="font-bold text-lg">تحلیل هوشمند تصویر...</p>
-              <p className="text-sm text-slate-400 mt-2">{settings.aiEngine === 'local' ? 'Local AI Processing' : 'Gemini AI Processing'}</p>
+            <div style={{ ...styles.resultCard, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#0284c7' }}>
+              <div style={{ animation: 'spin 1s linear infinite' }}><Icons.Loader2 size={48} /></div>
+              <p style={{ fontWeight: 'bold', fontSize: '18px', marginTop: '16px' }}>تحلیل هوشمند تصویر...</p>
+              <p style={{ fontSize: '14px', color: '#94a3b8' }}>WebGPU Processing</p>
             </div>
           ) : lastRecord ? (
-            <div className="bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden h-full">
-              <div className={`p-6 border-b ${getGradeColor(lastRecord.grade)}`}>
-                <div className="flex justify-between items-start">
+            <div style={styles.resultCard}>
+              <div style={styles.resultHeader(getGradeBg(lastRecord.grade))}>
+                <div style={styles.gradeBox}>
                   <div>
-                    <span className="text-sm opacity-80 font-medium">نتیجه ارزیابی</span>
-                    <h3 className="text-3xl font-extrabold mt-1">{lastRecord.grade.split('(')[0]}</h3>
-                    <p className="text-sm mt-1 opacity-90">{lastRecord.grade.split('(')[1]?.replace(')', '')}</p>
+                    <span style={{ fontSize: '14px', opacity: 0.8, fontWeight: '500' }}>نتیجه ارزیابی</span>
+                    <h3 style={styles.gradeTitle}>{lastRecord.grade.split('(')[0]}</h3>
+                    <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>{lastRecord.grade.split('(')[1]?.replace(')', '')}</p>
                   </div>
-                  {lastRecord.grade === SteelGrade.Grade1 ? <CheckCircle size={40} /> : <AlertTriangle size={40} />}
+                  {lastRecord.grade === SteelGrade.Grade1 ? <Icons.CheckCircle size={40} color="#16a34a" /> : <Icons.AlertTriangle size={40} color="#ca8a04" />}
                 </div>
               </div>
 
-              <div className="p-6 space-y-6">
+              <div style={styles.defectList}>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-500 uppercase mb-3">عیوب شناسایی شده</h4>
+                  <h4 style={{ fontSize: '14px', fontWeight: 'bold', color: '#64748b', marginBottom: '12px' }}>عیوب شناسایی شده</h4>
                   {lastRecord.defects.length > 0 ? (
-                    <div className="space-y-3">
+                    <div>
                       {lastRecord.defects.map((defect, idx) => (
-                        <div key={idx} className="flex items-start gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                          <XCircle size={18} className="text-red-500 mt-0.5 shrink-0" />
-                          <div>
-                            <div className="flex justify-between w-full gap-8">
-                              <span className="font-bold text-slate-800">{defect.type}</span>
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                defect.severity === 'High' ? 'bg-red-100 text-red-700' : 
-                                defect.severity === 'Medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'
-                              }`}>
-                                {defect.severity === 'High' ? 'شدید' : defect.severity === 'Medium' ? 'متوسط' : 'خفیف'}
-                              </span>
+                        <div key={idx} style={styles.defectItem}>
+                          <div style={{ color: '#ef4444' }}><Icons.XCircle size={18} /></div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                              <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{defect.type}</span>
+                              <span style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '12px', backgroundColor: '#fee2e2', color: '#b91c1c' }}>{defect.severity}</span>
                             </div>
-                            <p className="text-sm text-slate-500 mt-1 leading-relaxed">{defect.description}</p>
+                            <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>{defect.description}</p>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-6 bg-green-50 rounded-lg text-green-700 border border-green-100">
-                      <CheckCircle className="mx-auto mb-2" size={24} />
-                      <p>هیچ عیب قابل توجهی یافت نشد.</p>
+                    <div style={{ padding: '16px', backgroundColor: '#f0fdf4', borderRadius: '8px', color: '#15803d', textAlign: 'center', border: '1px solid #dcfce7' }}>
+                      <p style={{ margin: 0, fontWeight: '500' }}>هیچ عیب قابل توجهی یافت نشد.</p>
                     </div>
                   )}
                 </div>
 
-                <div className="pt-4 border-t border-slate-100">
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-slate-500">اطمینان هوش مصنوعی</span>
-                    <span className="font-bold text-slate-800">{lastRecord.confidence || 95}%</span>
+                <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #f1f5f9' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '8px' }}>
+                    <span style={{ color: '#64748b' }}>اطمینان هوش مصنوعی</span>
+                    <span style={{ fontWeight: 'bold' }}>{lastRecord.confidence || 95}%</span>
                   </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2">
-                    <div className="bg-brand-500 h-2 rounded-full" style={{ width: `${lastRecord.confidence || 95}%` }}></div>
+                  <div style={{ width: '100%', height: '8px', backgroundColor: '#f1f5f9', borderRadius: '4px' }}>
+                    <div style={{ width: `${lastRecord.confidence || 95}%`, height: '100%', backgroundColor: '#0ea5e9', borderRadius: '4px' }}></div>
                   </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="h-full bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 p-8 text-center">
-              <Camera size={48} className="mb-4 opacity-50" />
-              <p>تصویری تحلیل نشده است.</p>
-              <p className="text-sm mt-2">دوربین را فعال کنید یا عکس بگیرید.</p>
+            <div style={styles.emptyState}>
+              <div style={{ opacity: 0.5, marginBottom: '16px' }}><Icons.Camera size={48} /></div>
+              <p style={{ margin: 0, fontWeight: '500' }}>تصویری تحلیل نشده است.</p>
             </div>
           )}
         </div>

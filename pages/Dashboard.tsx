@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { InspectionRecord, SteelGrade } from '../types';
+import { InspectionRecord, AppSettings, DEFAULT_SETTINGS } from '../types';
 import { Icons } from '../components/Icons';
 
 const styles = {
@@ -12,7 +12,7 @@ const styles = {
   chartContainer: { backgroundColor: 'white', padding: '24px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '24px' },
   chartTitle: { fontSize: '18px', fontWeight: 'bold', color: '#1e293b', marginBottom: '24px', borderBottom: '1px solid #f1f5f9', paddingBottom: '16px' },
   tableContainer: { backgroundColor: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' },
-  tableHeader: { padding: '16px 24px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
+  tableHeader: { padding: '16px 24px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' as 'wrap', gap: '16px' },
   table: { width: '100%', borderCollapse: 'collapse' as 'collapse' },
   th: { textAlign: 'right' as 'right', padding: '12px 24px', fontSize: '14px', color: '#64748b', fontWeight: '500' },
   td: { padding: '12px 24px', fontSize: '14px', borderTop: '1px solid #f1f5f9', color: '#334155' },
@@ -32,17 +32,30 @@ const styles = {
 
 const Dashboard: React.FC = () => {
   const [records, setRecords] = useState<InspectionRecord[]>([]);
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [severityFilter, setSeverityFilter] = useState<'All' | 'High' | 'Medium' | 'Low'>('All');
 
   useEffect(() => {
     const saved = localStorage.getItem('qc_records');
     if (saved) setRecords(JSON.parse(saved));
+    
+    const savedSettings = localStorage.getItem('app_settings');
+    if (savedSettings) setSettings(JSON.parse(savedSettings));
   }, []);
 
   // Stats
   const total = records.length;
-  const grade1 = records.filter(r => r.grade === SteelGrade.Grade1).length;
-  const grade2 = records.filter(r => r.grade === SteelGrade.Grade2).length;
-  const grade3 = records.filter(r => r.grade === SteelGrade.Grade3).length;
+  
+  // Calculate Grade Counts Dynamically
+  const gradeCounts: Record<string, number> = {};
+  settings.customGrades.forEach(g => gradeCounts[g.name] = 0);
+  records.forEach(r => {
+    gradeCounts[r.grade] = (gradeCounts[r.grade] || 0) + 1;
+  });
+
+  // Simple heuristic for success rate (Assuming first grade defined is the 'Best')
+  const bestGradeName = settings.customGrades.length > 0 ? settings.customGrades[0].name : 'Grade 1';
+  const successCount = gradeCounts[bestGradeName] || 0;
 
   // Defect Pareto
   const defectCounts: Record<string, number> = {};
@@ -82,6 +95,32 @@ const Dashboard: React.FC = () => {
     document.body.removeChild(link);
   };
 
+  const displayedRecords = records.filter(r => {
+    if (severityFilter === 'All') return true;
+    return r.defects.some(d => d.severity === severityFilter);
+  });
+
+  const getGradeColor = (grade: string) => {
+      const g = grade.toLowerCase();
+      if(g.includes('1') || g.includes('prime') || g.includes('good')) return '#22c55e';
+      if(g.includes('3') || g.includes('scrap') || g.includes('reject')) return '#ef4444';
+      return '#eab308';
+  };
+  
+  const getGradeBg = (grade: string) => {
+      const g = grade.toLowerCase();
+      if(g.includes('1') || g.includes('prime') || g.includes('good')) return '#dcfce7';
+      if(g.includes('3') || g.includes('scrap') || g.includes('reject')) return '#fee2e2';
+      return '#fef9c3';
+  };
+  
+  const getGradeTextColor = (grade: string) => {
+      const g = grade.toLowerCase();
+      if(g.includes('1') || g.includes('prime') || g.includes('good')) return '#15803d';
+      if(g.includes('3') || g.includes('scrap') || g.includes('reject')) return '#b91c1c';
+      return '#a16207';
+  };
+
   const StatBox = ({ title, val, sub, icon }: any) => (
     <div style={styles.statsCard}>
       <div>
@@ -104,28 +143,25 @@ const Dashboard: React.FC = () => {
 
       <div style={styles.cardGrid}>
         <StatBox title="تولید کل" val={total} sub="شیت" icon={<Icons.Layers size={24} />} />
-        <StatBox title="نرخ سلامت" val={`${total ? Math.round((grade1/total)*100) : 0}%`} sub="درجه ۱" icon={<Icons.CheckCircle size={24} />} />
+        <StatBox title="نرخ سلامت" val={`${total ? Math.round((successCount/total)*100) : 0}%`} sub={`تعداد ${bestGradeName}`} icon={<Icons.CheckCircle size={24} />} />
         <StatBox title="عیب اصلی" val={pareto[0]?.[0] || '-'} sub="بیشترین تکرار" icon={<Icons.AlertOctagon size={24} />} />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
         
-        {/* Quality Distribution (Linear Charts) */}
+        {/* Quality Distribution (Dynamic Linear Charts) */}
         <div style={styles.chartContainer}>
           <h3 style={styles.chartTitle}>توزیع کیفی محصولات</h3>
           <div style={{ padding: '10px 0' }}>
-            <div style={styles.progressRow}>
-              <div style={styles.progressLabel}><span>درجه ۱ (ممتاز)</span><span>{grade1}</span></div>
-              <div style={styles.track}><div style={styles.fill(total ? (grade1/total)*100 : 0, '#22c55e')}></div></div>
-            </div>
-            <div style={styles.progressRow}>
-              <div style={styles.progressLabel}><span>درجه ۲ (معمولی)</span><span>{grade2}</span></div>
-              <div style={styles.track}><div style={styles.fill(total ? (grade2/total)*100 : 0, '#eab308')}></div></div>
-            </div>
-            <div style={styles.progressRow}>
-              <div style={styles.progressLabel}><span>درجه ۳ (ضایعات)</span><span>{grade3}</span></div>
-              <div style={styles.track}><div style={styles.fill(total ? (grade3/total)*100 : 0, '#ef4444')}></div></div>
-            </div>
+            {settings.customGrades.map(g => {
+                const count = gradeCounts[g.name] || 0;
+                return (
+                    <div key={g.id} style={styles.progressRow}>
+                    <div style={styles.progressLabel}><span>{g.name}</span><span>{count}</span></div>
+                    <div style={styles.track}><div style={styles.fill(total ? (count/total)*100 : 0, getGradeColor(g.name))}></div></div>
+                    </div>
+                )
+            })}
           </div>
         </div>
 
@@ -149,8 +185,33 @@ const Dashboard: React.FC = () => {
 
       <div style={styles.tableContainer}>
         <div style={styles.tableHeader}>
-           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
              <span style={{ fontWeight: 'bold', color: '#334155' }}>آخرین رکوردهای ثبت شده</span>
+             
+             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '8px' }}>
+                <div style={{ padding: '0 4px', display: 'flex', alignItems: 'center' }}><Icons.Filter size={14} color="#64748b" /></div>
+                {(['All', 'High', 'Medium', 'Low'] as const).map(sev => (
+                  <button
+                    key={sev}
+                    onClick={() => setSeverityFilter(sev)}
+                    style={{
+                      border: 'none',
+                      backgroundColor: severityFilter === sev ? 'white' : 'transparent',
+                      color: severityFilter === sev ? '#0f172a' : '#64748b',
+                      fontSize: '12px',
+                      fontWeight: severityFilter === sev ? 'bold' : 'normal',
+                      padding: '4px 12px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      boxShadow: severityFilter === sev ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {sev === 'All' ? 'همه' : sev}
+                  </button>
+                ))}
+             </div>
+
              <button onClick={handleDownloadCSV} style={{ display: 'flex', alignItems: 'center', gap: '6px', border: 'none', background: 'none', color: '#0284c7', fontSize: '13px', cursor: 'pointer', fontWeight: 'bold', padding: '4px 8px', borderRadius: '4px', backgroundColor: '#e0f2fe' }}>
                <Icons.Download size={16} /> دانلود گزارش (CSV)
              </button>
@@ -167,22 +228,28 @@ const Dashboard: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {records.slice(0, 10).map(r => (
+            {displayedRecords.length > 0 ? displayedRecords.slice(0, 50).map(r => (
               <tr key={r.id}>
                 <td style={styles.td}>{new Date(r.timestamp).toLocaleTimeString('fa-IR')}</td>
                 <td style={styles.td}>{r.batchId}</td>
                 <td style={styles.td}>
                   <span style={{ 
                     padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold',
-                    backgroundColor: r.grade === SteelGrade.Grade1 ? '#dcfce7' : r.grade === SteelGrade.Grade2 ? '#fef9c3' : '#fee2e2',
-                    color: r.grade === SteelGrade.Grade1 ? '#15803d' : r.grade === SteelGrade.Grade2 ? '#a16207' : '#b91c1c'
+                    backgroundColor: getGradeBg(r.grade),
+                    color: getGradeTextColor(r.grade)
                   }}>
                     {r.grade}
                   </span>
                 </td>
                 <td style={styles.td}>{r.defects.map(d => d.type).join('، ') || '-'}</td>
               </tr>
-            ))}
+            )) : (
+              <tr>
+                <td colSpan={4} style={{ padding: '24px', textAlign: 'center', color: '#94a3b8' }}>
+                  رکوردی با این فیلتر یافت نشد.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

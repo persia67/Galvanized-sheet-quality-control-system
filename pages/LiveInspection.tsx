@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import CameraView from '../components/CameraView';
 import { analyzeSteelFrame } from '../services/aiService';
-import { InspectionRecord, SteelGrade, AppSettings, DEFAULT_SETTINGS } from '../types';
+import { InspectionRecord, AppSettings, DEFAULT_SETTINGS } from '../types';
 import { Icons } from '../components/Icons';
 
 const styles = {
@@ -47,7 +47,7 @@ const LiveInspection: React.FC = () => {
         id: Date.now().toString(),
         timestamp: Date.now(),
         imageUrl: imageSrc,
-        grade: result.grade as SteelGrade,
+        grade: result.grade,
         defects: result.defects,
         confidence: result.confidence,
         batchId: `B-${new Date().getHours()}`
@@ -64,14 +64,20 @@ const LiveInspection: React.FC = () => {
     }
   };
 
-  const getGradeBg = (grade: SteelGrade) => {
-    switch (grade) {
-      case SteelGrade.Grade1: return '#f0fdf4'; // green-50
-      case SteelGrade.Grade2: return '#fefce8'; // yellow-50
-      case SteelGrade.Grade3: return '#fef2f2'; // red-50
-      default: return '#f8fafc';
-    }
+  // Heuristic for color coding based on grade name
+  const getGradeBg = (grade: string) => {
+    const g = grade.toLowerCase();
+    if (g.includes('1') || g.includes('one') || g.includes('prime') || g.includes('good')) return '#f0fdf4'; // green-50
+    if (g.includes('3') || g.includes('three') || g.includes('scrap') || g.includes('reject')) return '#fef2f2'; // red-50
+    return '#fefce8'; // yellow-50 (default/medium)
   };
+
+  const getBorderColor = (grade: string) => {
+    const g = grade.toLowerCase();
+    if (g.includes('1') || g.includes('one') || g.includes('prime')) return '#4ade80';
+    if (g.includes('3') || g.includes('three') || g.includes('scrap')) return '#f87171';
+    return '#facc15';
+  }
 
   return (
     <div style={styles.page}>
@@ -106,7 +112,7 @@ const LiveInspection: React.FC = () => {
             <div style={styles.scrollRow}>
               {records.slice(0, 6).map((rec) => (
                 <div key={rec.id} style={{ minWidth: '100px', textAlign: 'center' }}>
-                  <div style={{ width: '100px', height: '64px', borderRadius: '8px', overflow: 'hidden', border: `2px solid ${rec.grade === SteelGrade.Grade1 ? '#4ade80' : rec.grade === SteelGrade.Grade2 ? '#facc15' : '#f87171'}` }}>
+                  <div style={{ width: '100px', height: '64px', borderRadius: '8px', overflow: 'hidden', border: `2px solid ${getBorderColor(rec.grade)}` }}>
                     <img src={rec.imageUrl} alt="scan" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                   <span style={{ fontSize: '10px', marginTop: '4px', fontWeight: 'bold', color: '#475569', display: 'block' }}>
@@ -132,10 +138,10 @@ const LiveInspection: React.FC = () => {
                 <div style={styles.gradeBox}>
                   <div>
                     <span style={{ fontSize: '14px', opacity: 0.8, fontWeight: '500' }}>نتیجه ارزیابی</span>
-                    <h3 style={styles.gradeTitle}>{lastRecord.grade.split('(')[0]}</h3>
-                    <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>{lastRecord.grade.split('(')[1]?.replace(')', '')}</p>
+                    <h3 style={styles.gradeTitle}>{lastRecord.grade}</h3>
+                    <p style={{ fontSize: '14px', margin: 0, opacity: 0.9 }}>{settings.customGrades.find(g => g.name === lastRecord.grade)?.description || ''}</p>
                   </div>
-                  {lastRecord.grade === SteelGrade.Grade1 ? <Icons.CheckCircle size={40} color="#16a34a" /> : <Icons.AlertTriangle size={40} color="#ca8a04" />}
+                  {(lastRecord.grade.includes('1') || lastRecord.grade.includes('Good')) ? <Icons.CheckCircle size={40} color="#16a34a" /> : <Icons.AlertTriangle size={40} color="#ca8a04" />}
                 </div>
               </div>
 

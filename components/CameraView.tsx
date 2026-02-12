@@ -107,6 +107,7 @@ const CameraView: React.FC<CameraViewProps> = ({ onCapture, isAnalyzing, autoMod
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [error, setError] = useState<string>('');
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [activeRes, setActiveRes] = useState<string>('');
 
   useEffect(() => {
     startCamera();
@@ -122,26 +123,46 @@ const CameraView: React.FC<CameraViewProps> = ({ onCapture, isAnalyzing, autoMod
   }, [autoMode, isAnalyzing]);
 
   const startCamera = async () => {
+    // Priority 1: Dahua HFW2440 (approx 4MP: 2688x1520)
+    // Priority 2: Dahua HFW1230 (approx 2MP: 1920x1080)
+    // Priority 3: Fallback generic HD
     const attempts = [
-      { video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } } },
-      { video: { facingMode: 'environment' } },
-      { video: true }
+      { 
+        label: '4MP (Dahua 2440)',
+        video: { width: { ideal: 2688 }, height: { ideal: 1520 }, facingMode: 'environment' } 
+      },
+      { 
+        label: '2MP (Dahua 1230)',
+        video: { width: { ideal: 1920 }, height: { ideal: 1080 }, facingMode: 'environment' } 
+      },
+      { 
+        label: 'Generic Webcam',
+        video: true 
+      }
     ];
 
     for (const constraints of attempts) {
       try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+        const mediaStream = await navigator.mediaDevices.getUserMedia(constraints.video as MediaStreamConstraints);
         setStream(mediaStream);
+        
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
+          // Wait for metadata to get actual resolution
+          videoRef.current.onloadedmetadata = () => {
+             if(videoRef.current) {
+                setActiveRes(`${videoRef.current.videoWidth}x${videoRef.current.videoHeight}`);
+             }
+          };
         }
         setError('');
+        console.log(`Camera connected using profile: ${constraints.label}`);
         return; 
       } catch (err) {
-        console.warn('Camera attempt failed:', constraints, err);
+        console.warn(`Camera attempt failed for ${constraints.label}:`, err);
       }
     }
-    setError('هیچ دوربینی شناسایی نشد. لطفاً اتصال دوربین را بررسی کنید.');
+    setError('دوربین داهوآ یا وبکم شناسایی نشد. لطفاً اتصال USB یا درایور Virtual Camera را بررسی کنید.');
   };
 
   const stopCamera = () => {
@@ -186,11 +207,11 @@ const CameraView: React.FC<CameraViewProps> = ({ onCapture, isAnalyzing, autoMod
 
           <div style={styles.overlay}>
             <div style={styles.liveDot}></div>
-            LIVE FEED - HIGH RES
+            DAHUA LIVE {activeRes ? `- ${activeRes}` : ''}
           </div>
           
           <div style={styles.grid}>
-             {/* Simple CSS Grid Overlay */}
+             {/* Simple CSS Grid Overlay for Center Focus */}
              <div style={{ position: 'absolute', top: '50%', width: '100%', height: '1px', backgroundColor: 'rgba(6,182,212,0.3)' }}></div>
              <div style={{ position: 'absolute', left: '50%', height: '100%', width: '1px', backgroundColor: 'rgba(6,182,212,0.3)' }}></div>
           </div>

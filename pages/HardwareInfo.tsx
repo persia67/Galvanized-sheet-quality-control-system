@@ -19,10 +19,10 @@ const HardwareInfo: React.FC = () => {
   return (
     <div style={styles.container}>
       <div style={styles.hero}>
-        <h2 style={styles.heroTitle}>راهنمای سخت‌افزار (WebGPU Edition)</h2>
+        <h2 style={styles.heroTitle}>پیکربندی سخت‌افزار (Dahua Integrated)</h2>
         <p style={{ opacity: 0.9, lineHeight: '1.6' }}>
-          برای اجرای روان مدل‌های هوش مصنوعی به صورت محلی در مرورگر، داشتن کارت گرافیک مناسب (GPU) الزامی است. 
-          این نسخه از WebGPU برای شتاب‌دهی سخت‌افزاری استفاده می‌کند.
+          این نسخه از نرم‌افزار برای کار با دوربین‌های صنعتی سری Dahua بهینه‌سازی شده است. 
+          ترکیب هوش مصنوعی WebGPU با اپتیک‌های داهوآ، دقت تشخیص عیوب ریز مانند "شوره سفید" و "خراش‌ها" را تضمین می‌کند.
         </p>
       </div>
 
@@ -31,9 +31,9 @@ const HardwareInfo: React.FC = () => {
           <div style={styles.iconBox('#dbeafe', '#2563eb')}>
             <Icons.Zap size={24} />
           </div>
-          <h3 style={styles.cardTitle}>کارت گرافیک (GPU)</h3>
+          <h3 style={styles.cardTitle}>واحد پردازش (GPU)</h3>
           <p style={styles.text}>
-            برای اجرای مدل LLaVA یا Llama-3 در مرورگر، پیشنهاد می‌شود از کارت‌های گرافیک NVIDIA RTX 3060 یا بالاتر با حداقل 8 گیگابایت VRAM استفاده کنید. مرورگرهای Chrome یا Edge (نسخه 113+) از WebGPU پشتیبانی می‌کنند.
+            برای پردازش تصویر 4 مگاپیکسلی دوربین 2440، پیشنهاد می‌شود از کارت گرافیک با حداقل 6GB حافظه (مانند RTX 3060) استفاده کنید تا نرخ فریم بالا حفظ شود.
           </p>
         </div>
 
@@ -41,33 +41,33 @@ const HardwareInfo: React.FC = () => {
           <div style={styles.iconBox('#fef9c3', '#ca8a04')}>
             <Icons.Camera size={24} />
           </div>
-          <h3 style={styles.cardTitle}>دوربین Line Scan</h3>
+          <h3 style={styles.cardTitle}>دوربین‌های Dahua</h3>
           <p style={styles.text}>
-            همچنان برای تصویربرداری صنعتی از ورق گالوانیزه در حال حرکت، دوربین‌های Line Scan با اینترفیس GigE Vision پیشنهاد می‌شوند که تصویر را به سیستم پردازش ارسال کنند.
+            سیستم برای دو مدل HFW2440 (رزولوشن بالا برای جزئیات) و HFW1230 (اقتصادی برای نظارت کلی) کالیبره شده است. نرم‌افزار به صورت خودکار رزولوشن بهینه را انتخاب می‌کند.
           </p>
         </div>
       </div>
 
       <div style={{ marginBottom: '16px' }}>
-         <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1e293b', borderRight: '4px solid #0ea5e9', paddingRight: '12px' }}>تجهیزات پیشنهادی</h3>
+         <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1e293b', borderRight: '4px solid #0ea5e9', paddingRight: '12px' }}>تجهیزات نصب شده</h3>
       </div>
       
       <div style={styles.listContainer}>
         <div style={styles.listItem}>
-          <span style={styles.brandBadge}>NVIDIA</span>
+          <span style={styles.brandBadge}>Dahua 4MP</span>
           <div>
-            <h4 style={{ fontWeight: 'bold', color: '#0f172a' }}>RTX 4060 Ti / RTX 3060 12GB</h4>
+            <h4 style={{ fontWeight: 'bold', color: '#0f172a' }}>IPC-HFW2440 Series (WizSense)</h4>
             <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
-              بهترین گزینه اقتصادی برای اجرای مدل‌های 7B و 8B به صورت محلی روی WebGPU.
+              دوربین اصلی بازرسی با رزولوشن 2688x1520. مجهز به سنسور Starlight برای عملکرد عالی در محیط‌های کارخانه با نور متغیر. مناسب برای تشخیص خراش‌های ریز و حفره‌ها.
             </p>
           </div>
         </div>
         <div style={styles.listItem}>
-          <span style={styles.brandBadge}>Apple</span>
+          <span style={styles.brandBadge}>Dahua 2MP</span>
           <div>
-            <h4 style={{ fontWeight: 'bold', color: '#0f172a' }}>M2 / M3 Silicon Chips</h4>
+            <h4 style={{ fontWeight: 'bold', color: '#0f172a' }}>IPC-HFW1230 Series (Entry)</h4>
             <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
-              چیپ‌های سیلیکون اپل به دلیل حافظه یکپارچه (Unified Memory) عملکرد فوق‌العاده‌ای در WebLLM دارند.
+              دوربین نظارتی با رزولوشن 1920x1080. مناسب برای تشخیص تغییر رنگ کلی ورق و نظارت بر روند حرکت کویل.
             </p>
           </div>
         </div>

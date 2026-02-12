@@ -50,6 +50,38 @@ const Dashboard: React.FC = () => {
   const pareto = Object.entries(defectCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const maxDefectCount = pareto.length > 0 ? pareto[0][1] : 1;
 
+  const handleDownloadCSV = () => {
+    if (records.length === 0) {
+      alert('داده‌ای برای دانلود وجود ندارد.');
+      return;
+    }
+
+    const headers = ['Timestamp', 'Date', 'Time', 'Batch ID', 'Grade', 'Defects'];
+    const rows = records.map(r => {
+      const dateObj = new Date(r.timestamp);
+      const defectsString = r.defects.map(d => `${d.type} (${d.severity})`).join('; ');
+      
+      return [
+        r.timestamp,
+        dateObj.toLocaleDateString('fa-IR'),
+        dateObj.toLocaleTimeString('fa-IR'),
+        r.batchId,
+        r.grade,
+        `"${defectsString.replace(/"/g, '""')}"`
+      ].join(',');
+    });
+
+    const csvContent = "\uFEFF" + [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `QC_Report_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const StatBox = ({ title, val, sub, icon }: any) => (
     <div style={styles.statsCard}>
       <div>
@@ -117,7 +149,12 @@ const Dashboard: React.FC = () => {
 
       <div style={styles.tableContainer}>
         <div style={styles.tableHeader}>
-           <span style={{ fontWeight: 'bold', color: '#334155' }}>آخرین رکوردهای ثبت شده</span>
+           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+             <span style={{ fontWeight: 'bold', color: '#334155' }}>آخرین رکوردهای ثبت شده</span>
+             <button onClick={handleDownloadCSV} style={{ display: 'flex', alignItems: 'center', gap: '6px', border: 'none', background: 'none', color: '#0284c7', fontSize: '13px', cursor: 'pointer', fontWeight: 'bold', padding: '4px 8px', borderRadius: '4px', backgroundColor: '#e0f2fe' }}>
+               <Icons.Download size={16} /> دانلود گزارش (CSV)
+             </button>
+           </div>
            <button onClick={() => { localStorage.removeItem('qc_records'); setRecords([]); }} style={{ border: 'none', background: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer' }}>پاکسازی داده‌ها</button>
         </div>
         <table style={styles.table}>

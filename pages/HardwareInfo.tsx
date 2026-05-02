@@ -19,10 +19,10 @@ const HardwareInfo: React.FC = () => {
   return (
     <div style={styles.container}>
       <div style={styles.hero}>
-        <h2 style={styles.heroTitle}>پیکربندی سخت‌افزار (Dahua Integrated)</h2>
+        <h2 style={styles.heroTitle}>پیکربندی سخت‌افزار (Multi-Camera Support)</h2>
         <p style={{ opacity: 0.9, lineHeight: '1.6' }}>
-          این نسخه از نرم‌افزار برای کار با دوربین‌های صنعتی سری Dahua بهینه‌سازی شده است. 
-          ترکیب هوش مصنوعی WebGPU با اپتیک‌های داهوآ، دقت تشخیص عیوب ریز مانند "شوره سفید" و "خراش‌ها" را تضمین می‌کند.
+          این نسخه از نرم‌افزار برای کار با دوربین‌های صنعتی Dahua و سیستم‌های نظارتی T&D بهینه‌سازی شده است. 
+          ترکیب دقت بالا (Dahua) و دید وسیع ۳۶۰ درجه (T&D) پوشش کامل خط تولید را فراهم می‌کند.
         </p>
       </div>
 
@@ -33,7 +33,7 @@ const HardwareInfo: React.FC = () => {
           </div>
           <h3 style={styles.cardTitle}>واحد پردازش (GPU)</h3>
           <p style={styles.text}>
-            برای پردازش تصویر 4 مگاپیکسلی دوربین 2440، پیشنهاد می‌شود از کارت گرافیک با حداقل 6GB حافظه (مانند RTX 3060) استفاده کنید تا نرخ فریم بالا حفظ شود.
+            برای پردازش همزمان داده‌های دوربین 4 مگاپیکسلی و دوربین PTZ، استفاده از کارت گرافیک‌های سری RTX با حداقل 6GB حافظه الزامی است.
           </p>
         </div>
 
@@ -41,9 +41,9 @@ const HardwareInfo: React.FC = () => {
           <div style={styles.iconBox('#fef9c3', '#ca8a04')}>
             <Icons.Camera size={24} />
           </div>
-          <h3 style={styles.cardTitle}>دوربین‌های Dahua</h3>
+          <h3 style={styles.cardTitle}>پروفایل‌های دوربین</h3>
           <p style={styles.text}>
-            سیستم برای دو مدل HFW2440 (رزولوشن بالا برای جزئیات) و HFW1230 (اقتصادی برای نظارت کلی) کالیبره شده است. نرم‌افزار به صورت خودکار رزولوشن بهینه را انتخاب می‌کند.
+            نرم‌افزار دارای پروفایل‌های اختصاصی برای مدل‌های Dahua HFW2440 (تشخیص عیوب)، HFW1230 (نظارت) و T&D PTZ (دید محیطی) می‌باشد.
           </p>
         </div>
       </div>
@@ -63,11 +63,20 @@ const HardwareInfo: React.FC = () => {
           </div>
         </div>
         <div style={styles.listItem}>
+          <span style={styles.brandBadge}>T&D PTZ</span>
+          <div>
+            <h4 style={{ fontWeight: 'bold', color: '#0f172a' }}>T&D 360° PTZ Series</h4>
+            <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
+              دوربین گردان با قابلیت چرخش ۳۶۰ درجه و زوم اپتیکال. ایده‌آل برای نظارت کلی بر سالن تولید و بررسی زوایای مختلف کویل در هنگام جابجایی.
+            </p>
+          </div>
+        </div>
+        <div style={styles.listItem}>
           <span style={styles.brandBadge}>Dahua 2MP</span>
           <div>
             <h4 style={{ fontWeight: 'bold', color: '#0f172a' }}>IPC-HFW1230 Series (Entry)</h4>
             <p style={{ fontSize: '13px', color: '#64748b', marginTop: '4px' }}>
-              دوربین نظارتی با رزولوشن 1920x1080. مناسب برای تشخیص تغییر رنگ کلی ورق و نظارت بر روند حرکت کویل.
+              دوربین نظارتی ثابت با رزولوشن 1920x1080. مناسب برای تشخیص تغییر رنگ کلی ورق و نظارت بر روند حرکت کویل.
             </p>
           </div>
         </div>

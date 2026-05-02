@@ -27,21 +27,49 @@ const styles = {
   progressRow: { marginBottom: '16px' },
   progressLabel: { display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '4px', color: '#475569' },
   track: { height: '8px', backgroundColor: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' },
-  fill: (width: number, color: string) => ({ height: '100%', width: `${width}%`, backgroundColor: color })
+  fill: (width: number, color: string) => ({ height: '100%', width: `${width}%`, backgroundColor: color }),
+
+  // Toggle switch for Archive
+  toggleContainer: { display: 'flex', backgroundColor: '#e2e8f0', borderRadius: '8px', padding: '4px', gap: '4px' },
+  toggleBtn: (active: boolean) => ({
+    padding: '6px 16px',
+    borderRadius: '6px',
+    border: 'none',
+    backgroundColor: active ? 'white' : 'transparent',
+    color: active ? '#0f172a' : '#64748b',
+    fontWeight: active ? 'bold' : 'normal',
+    cursor: 'pointer',
+    boxShadow: active ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+    fontSize: '13px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px'
+  })
 };
 
 const Dashboard: React.FC = () => {
   const [records, setRecords] = useState<InspectionRecord[]>([]);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [severityFilter, setSeverityFilter] = useState<'All' | 'High' | 'Medium' | 'Low'>('All');
+  const [showArchive, setShowArchive] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('qc_records');
-    if (saved) setRecords(JSON.parse(saved));
+    // Determine which storage to pull from
+    const storageKey = showArchive ? 'qc_archive_records' : 'qc_records';
+    const saved = localStorage.getItem(storageKey);
+    
+    if (saved) {
+        let loadedRecords = JSON.parse(saved);
+        // Force sort by date desc
+        loadedRecords = loadedRecords.sort((a: any, b: any) => b.timestamp - a.timestamp);
+        setRecords(loadedRecords);
+    } else {
+        setRecords([]);
+    }
     
     const savedSettings = localStorage.getItem('app_settings');
     if (savedSettings) setSettings(JSON.parse(savedSettings));
-  }, []);
+  }, [showArchive]);
 
   // Stats
   const total = records.length;
@@ -89,7 +117,7 @@ const Dashboard: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `QC_Report_${new Date().toISOString().slice(0,10)}.csv`);
+    link.setAttribute('download', `QC_Report_${showArchive ? 'Archive' : 'Active'}_${new Date().toISOString().slice(0,10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -136,9 +164,20 @@ const Dashboard: React.FC = () => {
 
   return (
     <div style={styles.page}>
-      <div style={styles.header}>
-        <h2 style={styles.title}>داشبورد کنترل کیفیت</h2>
-        <p style={styles.subtitle}>گزارش تحلیلی خط تولید (CSS Charts)</p>
+      <div style={{ ...styles.header, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+           <h2 style={styles.title}>داشبورد کنترل کیفیت {showArchive && <span style={{fontSize: '0.8em', color: '#64748b'}}>(آرشیو)</span>}</h2>
+           <p style={styles.subtitle}>{showArchive ? 'مشاهده داده‌های قدیمی (بیش از ۲ ماه)' : 'گزارش تحلیلی خط تولید (فعال)'}</p>
+        </div>
+        
+        <div style={styles.toggleContainer}>
+          <button onClick={() => setShowArchive(false)} style={styles.toggleBtn(!showArchive)}>
+            <Icons.Activity size={16} /> فعال
+          </button>
+          <button onClick={() => setShowArchive(true)} style={styles.toggleBtn(showArchive)}>
+            <Icons.Archive size={16} /> بایگانی
+          </button>
+        </div>
       </div>
 
       <div style={styles.cardGrid}>
@@ -186,7 +225,9 @@ const Dashboard: React.FC = () => {
       <div style={styles.tableContainer}>
         <div style={styles.tableHeader}>
            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-             <span style={{ fontWeight: 'bold', color: '#334155' }}>آخرین رکوردهای ثبت شده</span>
+             <span style={{ fontWeight: 'bold', color: '#334155' }}>
+               {showArchive ? 'رکوردهای بایگانی شده' : 'آخرین رکوردهای ثبت شده'}
+             </span>
              
              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#f1f5f9', padding: '4px', borderRadius: '8px' }}>
                 <div style={{ padding: '0 4px', display: 'flex', alignItems: 'center' }}><Icons.Filter size={14} color="#64748b" /></div>
@@ -216,7 +257,18 @@ const Dashboard: React.FC = () => {
                <Icons.Download size={16} /> دانلود گزارش (CSV)
              </button>
            </div>
-           <button onClick={() => { localStorage.removeItem('qc_records'); setRecords([]); }} style={{ border: 'none', background: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer' }}>پاکسازی داده‌ها</button>
+           
+           <button 
+             onClick={() => { 
+                if(confirm('آیا مطمئن هستید؟ این عملیات داده‌های ' + (showArchive ? 'بایگانی' : 'فعال') + ' را کاملاً حذف می‌کند.')) {
+                    localStorage.removeItem(showArchive ? 'qc_archive_records' : 'qc_records'); 
+                    setRecords([]); 
+                }
+             }} 
+             style={{ border: 'none', background: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer' }}
+           >
+             پاکسازی {showArchive ? 'بایگانی' : 'فعال'}
+           </button>
         </div>
         <table style={styles.table}>
           <thead>

@@ -25,6 +25,8 @@ const styles = {
   emptyState: { height: '100%', backgroundColor: '#f8fafc', borderRadius: '12px', border: '2px dashed #cbd5e1', display: 'flex', flexDirection: 'column' as 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', padding: '32px' }
 };
 
+const TWO_MONTHS_MS = 60 * 24 * 60 * 60 * 1000; // 60 days in milliseconds
+
 const LiveInspection: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [autoMode, setAutoMode] = useState(false);
@@ -34,7 +36,7 @@ const LiveInspection: React.FC = () => {
 
   useEffect(() => {
     const saved = localStorage.getItem('qc_records');
-    if (saved) setRecords(JSON.parse(saved).slice(0, 50));
+    if (saved) setRecords(JSON.parse(saved));
     const savedSettings = localStorage.getItem('app_settings');
     if (savedSettings) setSettings(JSON.parse(savedSettings));
   }, []);
@@ -54,9 +56,38 @@ const LiveInspection: React.FC = () => {
       };
 
       setLastRecord(newRecord);
-      const updatedRecords = [newRecord, ...records].slice(0, 100);
-      setRecords(updatedRecords);
-      localStorage.setItem('qc_records', JSON.stringify(updatedRecords));
+      
+      const allRecords = [newRecord, ...records];
+      const now = Date.now();
+
+      // Split into active (last 60 days) and archive (older)
+      const activeRecords: InspectionRecord[] = [];
+      const archiveRecords: InspectionRecord[] = [];
+
+      allRecords.forEach(r => {
+        if (now - r.timestamp > TWO_MONTHS_MS) {
+            archiveRecords.push(r);
+        } else {
+            activeRecords.push(r);
+        }
+      });
+
+      // Update State
+      setRecords(activeRecords);
+
+      // Save Active Records
+      localStorage.setItem('qc_records', JSON.stringify(activeRecords));
+
+      // Append to Archive Storage if needed
+      if (archiveRecords.length > 0) {
+        const existingArchive = JSON.parse(localStorage.getItem('qc_archive_records') || '[]');
+        // Prepend new archive items to keep sort order if needed, or simple merge
+        // Note: Using a simple merge strategy here.
+        const updatedArchive = [...archiveRecords, ...existingArchive];
+        localStorage.setItem('qc_archive_records', JSON.stringify(updatedArchive));
+        console.log(`${archiveRecords.length} records moved to archive.`);
+      }
+
     } catch (err) {
       console.error(err);
     } finally {
@@ -108,7 +139,7 @@ const LiveInspection: React.FC = () => {
           />
 
           <div style={styles.recentBox}>
-            <h3 style={styles.recentTitle}>آخرین بررسی‌ها</h3>
+            <h3 style={styles.recentTitle}>آخرین بررسی‌ها (فعال)</h3>
             <div style={styles.scrollRow}>
               {records.slice(0, 6).map((rec) => (
                 <div key={rec.id} style={{ minWidth: '100px', textAlign: 'center' }}>

@@ -108,6 +108,7 @@ const CameraView: React.FC<CameraViewProps> = ({ onCapture, isAnalyzing, autoMod
   const [error, setError] = useState<string>('');
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [activeRes, setActiveRes] = useState<string>('');
+  const [activeLabel, setActiveLabel] = useState<string>('');
 
   useEffect(() => {
     startCamera();
@@ -124,19 +125,19 @@ const CameraView: React.FC<CameraViewProps> = ({ onCapture, isAnalyzing, autoMod
 
   const startCamera = async () => {
     // Priority 1: Dahua HFW2440 (approx 4MP: 2688x1520)
-    // Priority 2: Dahua HFW1230 (approx 2MP: 1920x1080)
-    // Priority 3: Fallback generic HD
+    // Priority 2: T&D PTZ / Dahua HFW1230 (approx 2MP: 1920x1080)
+    // Priority 3: Fallback generic
     const attempts = [
       { 
         label: '4MP (Dahua 2440)',
         video: { width: { ideal: 2688 }, height: { ideal: 1520 }, facingMode: 'environment' } 
       },
       { 
-        label: '2MP (Dahua 1230)',
+        label: '2MP (Dahua 1230 / T&D PTZ)',
         video: { width: { ideal: 1920 }, height: { ideal: 1080 }, facingMode: 'environment' } 
       },
       { 
-        label: 'Generic Webcam',
+        label: 'Generic Camera',
         video: true 
       }
     ];
@@ -145,6 +146,7 @@ const CameraView: React.FC<CameraViewProps> = ({ onCapture, isAnalyzing, autoMod
       try {
         const mediaStream = await navigator.mediaDevices.getUserMedia(constraints.video as MediaStreamConstraints);
         setStream(mediaStream);
+        setActiveLabel(constraints.label);
         
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
@@ -162,7 +164,7 @@ const CameraView: React.FC<CameraViewProps> = ({ onCapture, isAnalyzing, autoMod
         console.warn(`Camera attempt failed for ${constraints.label}:`, err);
       }
     }
-    setError('دوربین داهوآ یا وبکم شناسایی نشد. لطفاً اتصال USB یا درایور Virtual Camera را بررسی کنید.');
+    setError('دوربین (Dahua/T&D) یا وبکم شناسایی نشد. لطفاً اتصال USB یا درایور Virtual Camera را بررسی کنید.');
   };
 
   const stopCamera = () => {
@@ -207,7 +209,8 @@ const CameraView: React.FC<CameraViewProps> = ({ onCapture, isAnalyzing, autoMod
 
           <div style={styles.overlay}>
             <div style={styles.liveDot}></div>
-            DAHUA LIVE {activeRes ? `- ${activeRes}` : ''}
+            {activeLabel && <span style={{ marginRight: '4px' }}>{activeLabel.split('(')[0]}</span>}
+            {activeRes ? `[${activeRes}]` : ''}
           </div>
           
           <div style={styles.grid}>

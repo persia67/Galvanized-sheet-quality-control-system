@@ -3,5 +3,6 @@
   "description": "نرم‌افزار هوشمند تشخیص عیوب ورق گالوانیزه با استفاده از هوش مصنوعی، گزارش‌دهی و تحلیل آماری.",
   "requestFramePermissions": [
     "camera"
-  ]
+  ],
+  "majorCapabilities": []
 }
